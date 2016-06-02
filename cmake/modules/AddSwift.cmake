@@ -1196,28 +1196,27 @@ function(add_swift_library name)
           DEPLOYMENT_VERSION_IOS "${SWIFTLIB_DEPLOYMENT_VERSION_IOS}"
         )
 
-        if(NOT SWIFTLIB_OBJECT_LIBRARY)
+        # Add dependencies on the (not-yet-created) custom lipo target.
+        foreach(DEP ${SWIFTLIB_LINK_LIBRARIES})
+          if (NOT "${DEP}" STREQUAL "icucore")
+            add_dependencies(${VARIANT_NAME}
+              "${DEP}-${SWIFT_SDK_${sdk}_LIB_SUBDIR}")
+            message("${VARIANT_NAME} ${DEP}-${SWIFT_SDK_${sdk}_LIB_SUBDIR}")
+          endif()
+        endforeach()
+
+        if (SWIFT_BUILD_STATIC_STDLIB AND SWIFTLIB_IS_STDLIB)
           # Add dependencies on the (not-yet-created) custom lipo target.
           foreach(DEP ${SWIFTLIB_LINK_LIBRARIES})
             if (NOT "${DEP}" STREQUAL "icucore")
-              add_dependencies(${VARIANT_NAME}
-                "${DEP}-${SWIFT_SDK_${sdk}_LIB_SUBDIR}")
+              add_dependencies("${VARIANT_NAME}-static"
+                "${DEP}-${SWIFT_SDK_${sdk}_LIB_SUBDIR}-static")
             endif()
           endforeach()
-
-          if (SWIFT_BUILD_STATIC_STDLIB AND SWIFTLIB_IS_STDLIB)
-            # Add dependencies on the (not-yet-created) custom lipo target.
-            foreach(DEP ${SWIFTLIB_LINK_LIBRARIES})
-              if (NOT "${DEP}" STREQUAL "icucore")
-                add_dependencies("${VARIANT_NAME}-static"
-                  "${DEP}-${SWIFT_SDK_${sdk}_LIB_SUBDIR}-static")
-              endif()
-            endforeach()
-          endif()
-
-          # Note this thin library.
-          list(APPEND THIN_INPUT_TARGETS ${VARIANT_NAME})
         endif()
+
+        # Note this thin library.
+        list(APPEND THIN_INPUT_TARGETS ${VARIANT_NAME})
       endforeach()
 
       if(NOT SWIFTLIB_OBJECT_LIBRARY)
